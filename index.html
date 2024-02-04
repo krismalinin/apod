@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>APOD</title>
+        
+        <style>
+            @font-face {
+                font-family: "Comic Sans MS";
+                src: url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.eot");
+                src: url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.eot?#iefix") format("embedded-opentype"), url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.woff2") format("woff2"), url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.woff") format("woff"), url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.ttf") format("truetype"), url("//db.onlinewebfonts.com/t/7cc6719bd5f0310be3150ba33418e72e.svg#Comic Sans MS") format("svg");
+            }
+            
+            body {
+                font-family: "Comic Sans MS";
+                height: 100%;
+                background-color: paleturquoise;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-blend-mode: color-burn;
+                text-align: center;
+                
+            }
+            
+            #header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            #apodImg {
+                display: none;
+                position: absolute;
+                height: 100vh;
+                width: 100vw;
+                margin: 0;
+                align-items: center;
+                justify-content: center;
+                perspective: 150px;
+            }
+ 
+            img {
+                height: 100%;
+                width: 100%;
+            }
+            
+            h3 {
+                color: white;
+                mix-blend-mode: exclusion;
+            }
+            
+            p {
+                color: white;
+                mix-blend-mode: exclusion;
+            }
+            
+            #userDate {
+                transform: translateZ(2000px);
+            }
+        
+        </style>
+    </head>
+    
+    <body>
+        <h1>NASA Astronomy Pic of the Day Browser (Videos Not Supported)</h1>
+        
+        <div id="header">
+            <label for="userDate">Select a Date:</label>
+            <input type="date" id="userDate" name="selectedDate"
+                   value=""
+                   min="1995-06-16" max="">
+            <button onclick="today()">Autofill Today's Date</button>
+            <button onclick="go()">Go!</button>
+        </div>
+        
+        <br><br><hr><br>
+        
+        <div id="apodImg">
+            <img id="pic">
+        </div>
+            <h3 id="date"></h3>
+            <h3 id="title"></h3>
+            <p id="caption"></p>
+        
+        <script>
+            
+            accessData = async() => {
+                let url = 'https://api.nasa.gov/planetary/apod?api_key=0iilipJRjxzT5jeLB0Itj4EdeDPg1icsAh6Pm5OG'; //&date=' + date;
+                let response = await fetch(url);
+                
+                if (response.ok) { //successful request
+                    let json = await response.json();
+                    console.log(json);
+                } else {
+                    console.log('Error: ' + response.status);
+                }
+            }
+            
+            const zeroPad = (num, places) => String(num).padStart(places, '0');
+            
+            var d = new Date();
+            var currentDate = d.getFullYear() + '-' + zeroPad((d.getMonth() + 1),2) + '-' + zeroPad((d.getDate()),2);
+            console.log(currentDate);
+            
+            
+            document.getElementById("userDate").max = currentDate;
+            
+            const picture = document.getElementById("pic");
+            
+            function go() {
+                var req = new XMLHttpRequest();  
+                var date = document.getElementById("userDate").value;
+                console.log(date);  
+                var url = 'https://api.nasa.gov/planetary/apod?api_key=0iilipJRjxzT5jeLB0Itj4EdeDPg1icsAh6Pm5OG&date=' + date;
+                console.log(url);
+                
+                req.open("GET", url);
+                req.send();
+                
+                req.addEventListener("load", function() {
+                    if (req.status == 200 && req.readyState == 4) {
+                        var response = JSON.parse(req.responseText);
+                        document.getElementById("title").textContent = response.title;
+                        document.getElementById("date").textContent = response.date;
+                        document.body.style.backgroundImage = "url(" + response.hdurl +")";
+                        document.getElementById("pic").src = response.hdurl;
+                        document.getElementById("caption").textContent = response.explanation;
+                    }
+                })
+                document.getElementById("apodImg").style.display = "block";
+            }
+            
+            function today() {
+                document.getElementById("userDate").value = (currentDate);
+            }
+            
+            window.addEventListener('load', accessData);
+            
+            let xBrowserRatio;
+            let yBrowserRatio;
+            
+            function scaleRatio() {
+                let browserWidth = window.innerWidth;
+                let browserHeight = window.innerHeight;
+                
+                xBrowserRatio = browserWidth / 100;
+                yBrowserRatio = browserHeight / 100;
+            }
+            
+            function coordinates(event) {
+                let xPos = event.clientX;
+                let yPos = event.clientY;
+                
+                updateRotation(xPos, yPos);
+            }
+            
+            function updateRotation(xPos, yPos) {
+                let xRotation = 50 - Math.ceil(yPos / yBrowserRatio);
+                //console.log('X rotation: ' + xRotation);
+                
+                let yRotation = 50 - Math.ceil(xPos / xBrowserRatio);
+                //console.log('Y rotation: ' + yRotation);
+                
+                picture.style.transform = 'rotateX(' + xRotation + 'deg)' + 'rotateY(' + yRotation + 'deg)';
+            }
+            
+            window.addEventListener('load', scaleRatio);
+            
+            window.addEventListener('resize', scaleRatio);
+            
+            window.addEventListener('mousemove', coordinates);
+        </script>
+    </body>
+</html>
